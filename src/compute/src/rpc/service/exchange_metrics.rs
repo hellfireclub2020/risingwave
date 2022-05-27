@@ -9,8 +9,8 @@ pub struct ExchangeServiceMetrics {
 impl ExchangeServiceMetrics {
     pub fn new(registry: Registry) -> Self {
         let stream_exchange_bytes = register_int_counter_vec_with_registry!(
-            "stream_exchange_data_size",
-            "Total size of stream chunks that have been send from upstream Actor to downstream Actor",
+            "stream_exchange_send_size",
+            "Total size of stream chunks that have been send to downstream Actor",
             &["up_actor_id", "down_actor_id"],
             registry
         )

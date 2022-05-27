@@ -34,7 +34,7 @@ use tonic::{Request, Response, Status};
 use crate::rpc::service::exchange_metrics::ExchangeServiceMetrics;
 
 /// Buffer size of the receiver of the remote channel.
-const EXCHANGE_BUFFER_SIZE: usize = 1024;
+const EXCHANGE_BUFFER_SIZE: usize = 64;
 
 #[derive(Clone)]
 pub struct ExchangeServiceImpl {
@@ -171,13 +171,6 @@ impl ExchangeServiceImpl {
                             Ok(msg) => Message::get_encoded_len(msg),
                             Err(_) => 0,
                         };
-                        metrics
-                            .stream_exchange_bytes
-                            .with_label_values(&[
-                                &up_down_ids.0.to_string(),
-                                &up_down_ids.1.to_string(),
-                            ])
-                            .inc_by(bytes as u64);
 
                         let _ = match tx.send(res).await.map_err(|e| {
                             RwError::from(ErrorCode::InternalError(format!(
@@ -185,7 +178,16 @@ impl ExchangeServiceImpl {
                                 e
                             )))
                         }) {
-                            Ok(_) => Ok(()),
+                            Ok(_) => {
+                                metrics
+                                    .stream_exchange_bytes
+                                    .with_label_values(&[
+                                        &up_down_ids.0.to_string(),
+                                        &up_down_ids.1.to_string(),
+                                    ])
+                                    .inc_by(bytes as u64);
+                                Ok(())
+                            }
                             Err(e) => tx.send(Err(e.to_grpc_status())).await,
                         };
                     }
