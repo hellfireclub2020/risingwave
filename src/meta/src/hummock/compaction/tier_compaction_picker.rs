@@ -337,6 +337,7 @@ pub mod tests {
 
     use super::*;
     use crate::hummock::compaction::overlap_strategy::RangeOverlapStrategy;
+    use crate::hummock::compaction::CompactionMode;
     use crate::hummock::test_utils::iterator_test_key_of_epoch;
 
     pub fn generate_table(
@@ -467,7 +468,15 @@ pub mod tests {
     fn test_selecting_key_range_overlap() {
         // When picking L0->L1, all L1 files overlapped with selecting_key_range should be picked.
 
-        let picker = TierCompactionPicker::default();
+        let picker = TierCompactionPicker::new(
+            0,
+            1,
+            Arc::new(CompactionConfig {
+                compaction_mode: CompactionMode::RangeMode,
+                ..Default::default()
+            }),
+            Arc::new(RangeOverlapStrategy::default()),
+        );
 
         let levels = vec![
             Level {
@@ -526,7 +535,15 @@ pub mod tests {
         // When picking L0->L1, L0's selecting_key_range should not be overlapped with L0's
 
         // compacting_key_range.
-        let picker = TierCompactionPicker::default();
+        let picker = TierCompactionPicker::new(
+            0,
+            1,
+            Arc::new(CompactionConfig {
+                compaction_mode: CompactionMode::RangeMode,
+                ..Default::default()
+            }),
+            Arc::new(RangeOverlapStrategy::default()),
+        );
         let mut levels = vec![
             Level {
                 level_idx: 0,
@@ -566,7 +583,15 @@ pub mod tests {
         // When picking L0->L1, L0's selecting_key_range should not be overlapped with any L1 files
         // under compaction.
 
-        let picker = TierCompactionPicker::default();
+        let picker = TierCompactionPicker::new(
+            0,
+            1,
+            Arc::new(CompactionConfig {
+                compaction_mode: CompactionMode::RangeMode,
+                ..Default::default()
+            }),
+            Arc::new(RangeOverlapStrategy::default()),
+        );
         let mut levels = vec![
             Level {
                 level_idx: 0,
@@ -619,7 +644,15 @@ pub mod tests {
     fn test_compacting_key_range_overlap_intra_l0() {
         // When picking L0->L0, L0's selecting_key_range should not be overlapped with L0's
         // compacting_key_range.
-        let picker = TierCompactionPicker::default();
+        let picker = TierCompactionPicker::new(
+            0,
+            1,
+            Arc::new(CompactionConfig {
+                compaction_mode: CompactionMode::RangeMode,
+                ..Default::default()
+            }),
+            Arc::new(RangeOverlapStrategy::default()),
+        );
         let mut levels = vec![
             Level {
                 level_idx: 0,
