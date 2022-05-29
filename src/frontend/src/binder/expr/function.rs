@@ -40,6 +40,8 @@ impl Binder {
                 "min" => Some(AggKind::Min),
                 "max" => Some(AggKind::Max),
                 "avg" => Some(AggKind::Avg),
+                "string_agg" => Some(AggKind::StringAgg),
+                "single_value" => Some(AggKind::SingleValue),
                 _ => None,
             };
             if let Some(kind) = agg_kind {
@@ -63,18 +65,27 @@ impl Binder {
                     ExprType::Case
                 }
                 "concat_ws" => ExprType::ConcatWs,
+                "split_part" => ExprType::SplitPart,
                 "coalesce" => ExprType::Coalesce,
                 "round" => {
                     inputs = Self::rewrite_round_args(inputs);
                     ExprType::RoundDigit
                 }
                 "abs" => ExprType::Abs,
+                "booleq" => {
+                    inputs = Self::rewrite_two_bool_inputs(inputs)?;
+                    ExprType::Equal
+                }
+                "boolne" => {
+                    inputs = Self::rewrite_two_bool_inputs(inputs)?;
+                    ExprType::NotEqual
+                }
                 _ => {
                     return Err(ErrorCode::NotImplemented(
                         format!("unsupported function: {:?}", function_name),
                         112.into(),
                     )
-                    .into())
+                    .into());
                 }
             };
             Ok(FunctionCall::new(function_type, inputs)?.into())
@@ -132,6 +143,20 @@ impl Binder {
         } else {
             inputs
         }
+    }
+
+    fn rewrite_two_bool_inputs(mut inputs: Vec<ExprImpl>) -> Result<Vec<ExprImpl>> {
+        if inputs.len() != 2 {
+            return Err(
+                ErrorCode::BindError("function must contain only 2 arguments".to_string()).into(),
+            );
+        }
+        let left = inputs.pop().unwrap();
+        let right = inputs.pop().unwrap();
+        Ok(vec![
+            left.cast_implicit(DataType::Boolean)?,
+            right.cast_implicit(DataType::Boolean)?,
+        ])
     }
 
     fn ensure_aggregate_allowed(&self) -> Result<()> {

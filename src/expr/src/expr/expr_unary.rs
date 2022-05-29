@@ -398,6 +398,13 @@ mod tests {
             let x = target[idx].as_ref().map(|x| x.as_scalar_ref());
             assert_eq!(x, item);
         }
+
+        for i in 0..input.len() {
+            let row = Row::new(vec![input[i].map(|int| int.to_scalar_value())]);
+            let result = vec_executor.eval_row(&row).unwrap();
+            let expected = target[i].map(|int| int.to_scalar_value());
+            assert_eq!(result, expected);
+        }
     }
 
     #[test]
@@ -437,6 +444,13 @@ mod tests {
         for (idx, item) in arr.iter().enumerate() {
             let x = target[idx].as_ref().map(|x| x.as_scalar_ref());
             assert_eq!(x, item);
+        }
+
+        for i in 0..input.len() {
+            let row = Row::new(vec![input[i].map(|int| int.to_scalar_value())]);
+            let result = vec_executor.eval_row(&row).unwrap();
+            let expected = target[i].map(|int| int.to_scalar_value());
+            assert_eq!(result, expected);
         }
     }
 
@@ -484,6 +498,16 @@ mod tests {
             let x = target[idx].as_ref().map(|x| x.as_scalar_ref());
             assert_eq!(x, item);
         }
+
+        for i in 0..input.len() {
+            let row = Row::new(vec![input[i]
+                .as_ref()
+                .cloned()
+                .map(|str| str.to_scalar_value())]);
+            let result = vec_executor.eval_row(&row).unwrap();
+            let expected = target[i].as_ref().cloned().map(|x| x.to_scalar_value());
+            assert_eq!(result, expected);
+        }
     }
 
     fn test_unary_bool<A, F>(f: F, kind: Type)
@@ -522,6 +546,13 @@ mod tests {
             let x = target[idx].as_ref().map(|x| x.as_scalar_ref());
             assert_eq!(x, item);
         }
+
+        for i in 0..input.len() {
+            let row = Row::new(vec![input[i].map(|b| b.to_scalar_value())]);
+            let result = vec_executor.eval_row(&row).unwrap();
+            let expected = target[i].as_ref().cloned().map(|x| x.to_scalar_value());
+            assert_eq!(result, expected);
+        }
     }
 
     fn test_unary_date<A, F>(f: F, kind: Type)
@@ -557,6 +588,13 @@ mod tests {
         for (idx, item) in arr.iter().enumerate() {
             let x = target[idx].as_ref().map(|x| x.as_scalar_ref());
             assert_eq!(x, item);
+        }
+
+        for i in 0..input.len() {
+            let row = Row::new(vec![input[i].map(|d| d.to_scalar_value())]);
+            let result = vec_executor.eval_row(&row).unwrap();
+            let expected = target[i].as_ref().cloned().map(|x| x.to_scalar_value());
+            assert_eq!(result, expected);
         }
     }
 
