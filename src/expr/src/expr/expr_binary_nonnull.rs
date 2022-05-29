@@ -392,7 +392,7 @@ pub fn new_binary_expr(
                 },
             }
         }
-        Type::PgBitwiseShiftRight =>{
+        Type::PgBitwiseShiftRight => {
             gen_binary_expr_shift! {
                 gen_atm_impl,
                 l, r, ret,
@@ -410,7 +410,7 @@ pub fn new_binary_expr(
                 {
                 },
             }
-        },
+        }
         Type::BitwiseOr => {
             gen_binary_expr_shift! {
                 gen_atm_impl,
@@ -419,7 +419,7 @@ pub fn new_binary_expr(
                 {
                 },
             }
-        },
+        }
         Type::BitwiseXor => {
             gen_binary_expr_shift! {
                 gen_atm_impl,
@@ -428,7 +428,7 @@ pub fn new_binary_expr(
                 {
                 },
             }
-        },
+        }
         Type::Extract => build_extract_expr(ret, l, r),
         Type::RoundDigit => Box::new(
             BinaryExpression::<DecimalArray, I32Array, DecimalArray, _>::new(
@@ -442,7 +442,7 @@ pub fn new_binary_expr(
             l, r, ret, position,
         )),
         Type::TumbleStart => new_tumble_start(l, r, ret),
-        
+
         tp => {
             unimplemented!(
                 "The expression {:?} using vectorized expression framework is not supported yet!",
