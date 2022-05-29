@@ -18,9 +18,13 @@ use risingwave_common::catalog::{Field, Schema};
 use risingwave_common::error::Result;
 use risingwave_common::types::DataType;
 
-use super::{BatchUpdate, ColPrunable, PlanBase, PlanRef, PlanTreeNodeUnary, ToBatch, ToStream};
+use super::{
+    gen_filter_and_pushdown, BatchUpdate, ColPrunable, PlanBase, PlanRef, PlanTreeNodeUnary,
+    PredicatePushdown, ToBatch, ToStream,
+};
 use crate::catalog::TableId;
 use crate::expr::ExprImpl;
+use crate::utils::Condition;
 
 /// [`LogicalUpdate`] iterates on input relation, set some columns, and inject update records into
 /// specified table.
@@ -74,10 +78,14 @@ impl LogicalUpdate {
         )
     }
 
-    /// Get the logical delete's source id.
+    /// Get the logical update's source id.
     #[must_use]
     pub fn source_id(&self) -> TableId {
         self.source_id
+    }
+
+    pub fn exprs(&self) -> &[ExprImpl] {
+        self.exprs.as_ref()
     }
 }
 
@@ -112,6 +120,12 @@ impl ColPrunable for LogicalUpdate {
     }
 }
 
+impl PredicatePushdown for LogicalUpdate {
+    fn predicate_pushdown(&self, predicate: Condition) -> PlanRef {
+        gen_filter_and_pushdown(self, predicate, Condition::true_cond())
+    }
+}
+
 impl ToBatch for LogicalUpdate {
     fn to_batch(&self) -> Result<PlanRef> {
         let new_input = self.input().to_batch()?;
@@ -122,10 +136,10 @@ impl ToBatch for LogicalUpdate {
 
 impl ToStream for LogicalUpdate {
     fn to_stream(&self) -> Result<PlanRef> {
-        unreachable!("delete should always be converted to batch plan");
+        unreachable!("update should always be converted to batch plan");
     }
 
     fn logical_rewrite_for_stream(&self) -> Result<(PlanRef, crate::utils::ColIndexMapping)> {
-        unreachable!("delete should always be converted to batch plan");
+        unreachable!("update should always be converted to batch plan");
     }
 }

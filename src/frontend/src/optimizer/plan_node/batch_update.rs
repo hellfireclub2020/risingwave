@@ -16,10 +16,13 @@ use std::fmt;
 
 use risingwave_common::error::Result;
 use risingwave_pb::batch_plan::plan_node::NodeBody;
+use risingwave_pb::batch_plan::UpdateNode;
+use risingwave_pb::plan_common::TableRefId;
 
 use super::{
     LogicalUpdate, PlanBase, PlanRef, PlanTreeNodeUnary, ToBatchProst, ToDistributedBatch,
 };
+use crate::expr::Expr;
 use crate::optimizer::plan_node::ToLocalBatch;
 use crate::optimizer::property::{Distribution, Order};
 
@@ -36,7 +39,7 @@ impl BatchUpdate {
         let base = PlanBase::new_batch(
             ctx,
             logical.schema().clone(),
-            Distribution::any().clone(),
+            Distribution::Single,
             Order::any().clone(),
         );
         Self { base, logical }
@@ -70,13 +73,26 @@ impl ToDistributedBatch for BatchUpdate {
 
 impl ToBatchProst for BatchUpdate {
     fn to_batch_prost_body(&self) -> NodeBody {
-        todo!()
+        let table_id = TableRefId {
+            table_id: self.logical.source_id().table_id() as i32,
+            ..Default::default()
+        };
+        let exprs = self
+            .logical
+            .exprs()
+            .iter()
+            .map(Expr::to_expr_proto)
+            .collect();
+
+        NodeBody::Update(UpdateNode {
+            table_source_ref_id: Some(table_id),
+            exprs,
+        })
     }
 }
 
 impl ToLocalBatch for BatchUpdate {
     fn to_local(&self) -> Result<PlanRef> {
-        let new_input = self.input().to_local()?;
-        Ok(self.clone_with_input(new_input).into())
+        unreachable!()
     }
 }

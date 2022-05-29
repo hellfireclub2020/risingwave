@@ -62,6 +62,7 @@ message ExprNode {
     COALESCE = 217;
     CONCAT_WS = 218;
     ABS = 219;
+    SPLIT_PART = 220;
 
     // Boolean comparison
     IS_TRUE = 301;
@@ -70,10 +71,14 @@ message ExprNode {
     IS_NOT_FALSE = 304;
     IS_NULL = 305;
     IS_NOT_NULL = 306;
+    IS_DISTINCT_FROM = 307;
     // Unary operators
     NEG = 401;
     // Nested selection operators
     FIELD = 501;
+    // Array expression.
+    ARRAY = 521;
+    ARRAY_ACCESS = 522;
     // Search operator and Search ARGument
     SEARCH = 998;
     SARG = 999;
@@ -97,6 +102,11 @@ message ConstantValue {
   // interval: encoded to (months, days, milliseconds), big-endianness
   // varchar: encoded accorded to encoding, currently only utf8 is supported.
   bytes body = 1;
+}
+
+// For serializing struct value to vec<bytes>.
+message StructValue {
+  repeated bytes fields = 1;
 }
 
 message FunctionCall {

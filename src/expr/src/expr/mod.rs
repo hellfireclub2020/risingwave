@@ -15,6 +15,7 @@
 mod agg;
 pub mod build_expr_from_prost;
 pub mod data_types;
+mod expr_array;
 mod expr_binary_bytes;
 pub mod expr_binary_nonnull;
 pub mod expr_binary_nullable;
@@ -40,10 +41,11 @@ pub use expr_literal::*;
 use risingwave_common::array::{ArrayRef, DataChunk, Row};
 use risingwave_common::error::ErrorCode::InternalError;
 use risingwave_common::error::Result;
-use risingwave_common::types::DataType;
+use risingwave_common::types::{DataType, Datum};
 use risingwave_pb::expr::ExprNode;
 
 use crate::expr::build_expr_from_prost::*;
+use crate::expr::expr_array::ArrayExpression;
 use crate::expr::expr_coalesce::CoalesceExpression;
 use crate::expr::expr_concat_ws::ConcatWsExpression;
 use crate::expr::expr_field::FieldExpression;
@@ -60,6 +62,8 @@ pub trait Expression: std::fmt::Debug + Sync + Send {
     ///
     /// * `input` - input data of the Project Executor
     fn eval(&self, input: &DataChunk) -> Result<ArrayRef>;
+
+    fn eval_row(&self, input: &Row) -> Result<Datum>;
 
     fn boxed(self) -> BoxedExpression
     where
@@ -79,9 +83,8 @@ pub fn build_from_prost(prost: &ExprNode) -> Result<BoxedExpression> {
         | IsNotNull | Neg | Ascii | Abs | BitwiseNot => build_unary_expr_prost(prost),
         Equal | NotEqual | LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Add
         | Subtract | Multiply | Divide | Modulus | Extract | RoundDigit | TumbleStart
-        | Position | PgBitwiseShiftLeft | PgBitwiseShiftRight | BitwiseAnd | BitwiseOr
-        | BitwiseXor => build_binary_expr_prost(prost),
-        And | Or => build_nullable_binary_expr_prost(prost),
+        | Position | PgBitwiseShiftLeft | PgBitwiseShiftRight | BitwiseAnd | BitwiseOr | BitwiseXor => build_binary_expr_prost(prost),
+        And | Or | IsDistinctFrom => build_nullable_binary_expr_prost(prost),
         Coalesce => CoalesceExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
         Substr => build_substr_expr(prost),
         Length => build_length_expr(prost),
@@ -91,12 +94,14 @@ pub fn build_from_prost(prost: &ExprNode) -> Result<BoxedExpression> {
         Ltrim => build_ltrim_expr(prost),
         Rtrim => build_rtrim_expr(prost),
         ConcatWs => ConcatWsExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
+        SplitPart => build_split_part_expr(prost),
         ConstantValue => LiteralExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
         InputRef => InputRefExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
         Case => build_case_expr(prost),
         Translate => build_translate_expr(prost),
         In => build_in_expr(prost),
         Field => FieldExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
+        Array => ArrayExpression::try_from(prost).map(|d| Box::new(d) as BoxedExpression),
         _ => Err(InternalError(format!(
             "Unsupported expression type: {:?}",
             prost.get_expr_type()
@@ -126,5 +131,5 @@ impl RowExpression {
     }
 }
 
-#[cfg(test)]
 mod test_utils;
+pub use test_utils::*;

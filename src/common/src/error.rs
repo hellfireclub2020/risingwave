@@ -82,6 +82,8 @@ pub enum ErrorCode {
     MemoryError { layout: Layout },
     #[error("internal error: {0}")]
     InternalError(String),
+    #[error("connector error: {0}")]
+    ConnectorError(String),
     #[error(transparent)]
     ProstError(prost::DecodeError),
     #[error("Feature is not yet implemented: {0}, {1}")]
@@ -127,6 +129,8 @@ pub enum ErrorCode {
         config_entry: String,
         config_value: String,
     },
+    #[error("Invalid Parameter Value: {0}")]
+    InvalidParameterValue(String),
 
     /// This error occurs when the meta node receives heartbeat from a previous removed worker
     /// node. Currently we don't support re-register, and the worker node need a full restart.
@@ -301,6 +305,8 @@ impl ErrorCode {
             ErrorCode::Eof => 22,
             ErrorCode::BindError(_) => 23,
             ErrorCode::UnknownWorker => 24,
+            ErrorCode::ConnectorError(_) => 25,
+            ErrorCode::InvalidParameterValue(_) => 26,
             ErrorCode::UnknownError(_) => 101,
         }
     }
