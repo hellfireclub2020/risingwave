@@ -33,17 +33,18 @@ table_pattern = {
 def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", required=True)
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def parse_line(pattern, line):
     if pattern not in table_pattern.keys():
         os.exit(1)
     mapping = table_pattern[pattern]
-    res = dict()
-    for value, (name, op) in zip(line.strip().split('|'), mapping):
-        res[name] = op(value)
+    res = {
+        name: op(value)
+        for value, (name, op) in zip(line.strip().split('|'), mapping)
+    }
+
     print(json.dumps(res))
 
 
